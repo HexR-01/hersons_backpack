@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herson's Backpack - Crear Cuenta Normal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Share Tech Mono', monospace; margin: 0; overflow: hidden; height: 100vh; width: 100vw; }
+        .bg-gradient-blob { position: absolute; border-radius: 50%; filter: blur(120px); z-index: 0; opacity: 0.3; animation: float 20s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95); }
+        .blob-1 { width: 50vw; height: 50vw; top: -20%; left: -10%; }
+        .blob-2 { width: 40vw; height: 40vw; bottom: -10%; right: -10%; animation-delay: -5s; }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(5%, 10%) scale(1.1); } 66% { transform: translate(-5%, -5%) scale(0.9); } 100% { transform: translate(10%, -10%) scale(1.05); } }
+        .content-layer { position: relative; z-index: 10; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+        .dash-btn { position: relative; overflow: hidden; transition: all 0.2s ease; z-index: 1; }
+        .dash-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; transition: all 0.3s ease; z-index: -1; }
+        .dash-btn:hover::before { left: 0; }
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; opacity: 0.15; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient-blob blob-1"></div>
+    <div class="bg-gradient-blob blob-2"></div>
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="content-layer">
+        <header class="flex justify-between items-center p-6 w-full">
+            <a href="index.html" class="icon-btn hb-text-muted cursor-pointer p-2 rounded-full focus:outline-none inline-block" aria-label="Go Back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+            </a>
+            <span class="text-xs hb-accent border hb-border rounded px-3 py-1">[ROL ASIGNADO: USUARIO NORMAL / ESTUDIANTE]</span>
+        </header>
+
+        <main class="flex-grow flex flex-col items-center justify-center w-full px-4 sm:px-0">
+            <h1 class="text-2xl md:text-3xl font-bold hb-accent mb-2">&gt; Crear Nueva Cuenta</h1>
+            <p class="text-xs hb-text-muted mb-6 text-center max-w-md">
+                El registro público crea exclusivamente cuentas de usuario normal (ESTUDIANTE). Los permisos de Superusuario se gestionan directamente en la tabla <code class="hb-accent">superusuarios</code>.
+            </p>
+
+            <form id="signup-form" class="w-full max-w-md flex flex-col items-center">
+                <div class="cmd-input flex items-center border hb-border rounded-md hb-panel-alpha backdrop-blur-sm px-4 py-3 mb-4 w-full">
+                    <span class="hb-accent mr-3 text-base font-bold">User:</span>
+                    <input id="reg-username" type="text" placeholder="nuevo_usuario" class="bg-transparent w-full focus:outline-none hb-text-main placeholder-gray-500 font-mono" autocomplete="off" required>
+                </div>
+
+                <div class="cmd-input flex items-center border hb-border rounded-md hb-panel-alpha backdrop-blur-sm px-4 py-3 mb-4 w-full">
+                    <span class="hb-accent mr-3 text-base font-bold">Mail:</span>
+                    <input id="reg-email" type="email" placeholder="estudiante@universidad.edu" class="bg-transparent w-full focus:outline-none hb-text-main placeholder-gray-500 font-mono" autocomplete="off" required>
+                </div>
+
+                <div class="cmd-input flex items-center border hb-border rounded-md hb-panel-alpha backdrop-blur-sm px-4 py-3 mb-6 w-full">
+                    <span class="hb-accent mr-3 text-base font-bold">Pass:</span>
+                    <input id="reg-password" type="password" placeholder="••••••••" class="bg-transparent w-full focus:outline-none hb-text-main placeholder-gray-500 font-mono" required>
+                </div>
+
+                <p id="signup-msg" class="text-xs mb-4 hidden"></p>
+
+                <button type="submit" class="dash-btn w-full border hb-border rounded-md py-3 px-4 text-center hb-accent font-bold tracking-wider flex items-center justify-center gap-2">
+                    <span>[+]</span>
+                    <span data-i18n="signup_btn">Crear Cuenta Normal</span>
+                </button>
+
+                <div class="mt-4 text-xs hb-text-muted">
+                    <span data-i18n="signup_has_account">¿Ya tienes cuenta?</span>
+                    <a href="login.html" class="hb-accent hover:underline ml-1" data-i18n="nav_login">Iniciar Sesión</a>
+                </div>
+            </form>
+        </main>
+
+        <footer class="w-full text-center p-6 hb-text-muted text-sm">
+            <span>HB Registration v3.0 / ImHex@bk.ru</span>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if (HBClient.getCurrentUser()) {
+            window.location.replace('index.html');
+        }
+
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const u = document.getElementById('reg-username').value.trim();
+            const m = document.getElementById('reg-email').value.trim();
+            const p = document.getElementById('reg-password').value;
+            const msg = document.getElementById('signup-msg');
+
+            try {
+                const user = await HBClient.registrar(u, m, p);
+                msg.textContent = `> Cuenta normal creada para { "${user.username}" }. Redirigiendo...`;
+                msg.className = 'text-xs hb-accent mb-4';
+                msg.classList.remove('hidden');
+                setTimeout(() => { window.location.href = 'index.html'; }, 500);
+            } catch (err) {
+                msg.textContent = `> Error: ${err.message}`;
+                msg.className = 'text-xs text-red-500 mb-4';
+                msg.classList.remove('hidden');
+            }
+        });
+
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?/';
+        const charArray = chars.split('');
+        let fontSize = 16;
+        let columns = width / fontSize;
+        let drops = [];
+        for (let i = 0; i < columns; i++) drops[i] = Math.random() * -100;
+        function draw() {
+            const colors = HBClient.getMatrixColors();
+            ctx.fillStyle = colors.fill;
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = colors.text;
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(draw, 40);
+    </script>
+</body>
+</html>

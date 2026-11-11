@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herson's Backpack - Mi Espacio, Colaboraciones y Mensajes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Share Tech Mono', monospace; margin: 0; min-height: 100vh; overflow-x: hidden; }
+        .bg-gradient-blob { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -1; opacity: 0.2; animation: float 20s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95); }
+        .blob-1 { width: 50vw; height: 50vw; top: -20%; left: -10%; }
+        .blob-2 { width: 40vw; height: 40vw; bottom: -10%; right: -10%; animation-delay: -5s; }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(5%, 10%) scale(1.1); } 66% { transform: translate(-5%, -5%) scale(0.9); } 100% { transform: translate(10%, -10%) scale(1.05); } }
+        .dash-btn { position: relative; overflow: hidden; transition: all 0.2s ease; z-index: 1; }
+        .dash-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; transition: all 0.3s ease; z-index: -1; }
+        .dash-btn:hover::before { left: 0; }
+        .result-card { transition: all 0.2s ease; border-left: 2px solid transparent; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <div class="bg-gradient-blob blob-1"></div>
+    <div class="bg-gradient-blob blob-2"></div>
+
+    <header class="flex items-center justify-between p-4 sm:p-6 w-full border-b hb-border hb-panel-alpha backdrop-blur-md sticky top-0 z-40">
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="select-none transition-transform hover:scale-105" title="Back to Home">
+                <img src="hb.png" alt="HB Logo" class="h-10 sm:h-12 object-contain filter drop-shadow-[0_0_8px_rgba(74,222,128,0.4)]">
+            </a>
+            <div>
+                <h1 class="text-lg sm:text-xl font-bold hb-accent" data-i18n="ws_title">Mi Espacio :: Proyectos, Colaboraciones y Mensajes Privados</h1>
+                <p class="text-xs hb-text-muted hidden sm:block" data-i18n="ws_subtitle">Crea proyectos con 2 descripciones y múltiples enlaces, edita colaboraciones o envía mensajes privados e invitaciones.</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="projects.html" class="dash-btn border hb-border rounded px-3 py-1.5 text-xs sm:text-sm hb-text-main">
+                🔭 Explorar Todos
+            </a>
+            <a href="index.html" class="dash-btn border hb-border rounded px-3 py-1.5 text-xs sm:text-sm hb-accent">
+                [←] Inicio
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-grow w-full max-w-6xl mx-auto px-6 py-8 space-y-10">
+
+        <!-- Guard cuando no ha iniciado sesión -->
+        <div id="auth-guard-box" class="hidden border hb-border rounded-md p-8 hb-panel text-center max-w-lg mx-auto my-12">
+            <p class="hb-accent text-lg font-bold mb-3">&gt; Autenticación Requerida</p>
+            <p class="hb-text-main text-sm mb-6" data-i18n="ws_login_required">Inicia sesión o crea una cuenta normal para gestionar proyectos y mensajes privados.</p>
+            <div class="flex justify-center gap-3">
+                <a href="login.html" class="dash-btn inline-block border hb-border rounded px-6 py-2.5 hb-accent font-bold" data-i18n="nav_login">Iniciar Sesión</a>
+                <a href="signup.html" class="dash-btn inline-block border hb-border rounded px-6 py-2.5 hb-text-main font-bold" data-i18n="nav_signup">Crear Cuenta</a>
+            </div>
+        </div>
+
+        <!-- Contenedor Principal Autenticado -->
+        <div id="workspace-container" class="hidden space-y-10">
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Columna Izquierda: Crear / Editar Proyecto (con 2 descripciones y múltiples enlaces) -->
+                <div class="lg:col-span-5">
+                    <div class="hb-panel border hb-border rounded-md p-6">
+                        <div class="flex justify-between items-center border-b hb-border pb-3 mb-4">
+                            <h2 id="form-heading" class="hb-accent text-base font-bold" data-i18n="ws_new_title">&gt; Crear / Editar Proyecto Universitario</h2>
+                            <button id="reset-form-btn" type="button" class="text-xs hb-text-muted hover:underline hidden">[+ Nuevo]</button>
+                        </div>
+
+                        <form id="workspace-form" class="space-y-4 text-sm">
+                            <input type="hidden" id="ws-proyecto-id">
+
+                            <div>
+                                <label class="block hb-accent mb-1" data-i18n="form_title">Título del Proyecto:</label>
+                                <div class="cmd-input flex items-center border hb-border rounded hb-panel-alpha px-3 py-2">
+                                    <input id="ws-titulo" type="text" placeholder="ej. DataCenter_Env_Monitor" class="bg-transparent w-full focus:outline-none hb-text-main" required>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block hb-accent mb-1" data-i18n="form_type">Tipo de Proyecto:</label>
+                                <div class="cmd-input flex items-center border hb-border rounded hb-panel-alpha px-3 py-2">
+                                    <select id="ws-tipo" class="bg-transparent w-full focus:outline-none hb-text-main" required>
+                                        <option value="Programming" class="bg-[#181a20] text-white">Programming</option>
+                                        <option value="Database" class="bg-[#181a20] text-white">Database</option>
+                                        <option value="Hardware & IoT" class="bg-[#181a20] text-white">Hardware &amp; IoT</option>
+                                        <option value="Networks & Sec" class="bg-[#181a20] text-white">Networks &amp; Sec</option>
+                                        <option value="AI & Data Science" class="bg-[#181a20] text-white">AI &amp; Data Science</option>
+                                        <option value="Web & Mobile" class="bg-[#181a20] text-white">Web &amp; Mobile</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block hb-accent mb-1" data-i18n="form_stack">Tecnologías / Stack:</label>
+                                <div class="cmd-input flex items-center border hb-border rounded hb-panel-alpha px-3 py-2">
+                                    <input id="ws-tecnologias" type="text" placeholder="Java 17, Spring Boot, PostgreSQL..." class="bg-transparent w-full focus:outline-none hb-text-main">
+                                </div>
+                            </div>
+
+                            <!-- Cambio 5: Descripción Pequeña (buscador) y Descripción Larga (detalle) -->
+                            <div>
+                                <label class="block hb-accent mb-1" data-i18n="form_short_desc">Descripción Pequeña (Para el buscador):</label>
+                                <div class="cmd-input flex items-center border hb-border rounded hb-panel-alpha px-3 py-2">
+                                    <input id="ws-descripcion-corta" type="text" maxlength="280" placeholder="Resumen breve que saldrá en los resultados de búsqueda..." class="bg-transparent w-full focus:outline-none hb-text-main" required>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block hb-accent mb-1" data-i18n="form_desc">Descripción Larga (Se muestra al darle clic al proyecto):</label>
+                                <div class="cmd-input border hb-border rounded hb-panel-alpha px-3 py-2">
+                                    <textarea id="ws-descripcion" rows="4" placeholder="Explica a detalle la arquitectura, funcionamiento, diagramas y objetivos del proyecto..." class="bg-transparent w-full focus:outline-none hb-text-main resize-none" required></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Tabla 2 y Cambio 3: Añadir múltiples enlaces por si tienen más repositorios -->
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="block hb-accent text-xs" data-i18n="form_links">Enlaces / Repositorios (Puedes añadir varios):</label>
+                                    <button type="button" onclick="agregarCampoEnlaceWS()" class="dash-btn text-xs px-2 py-1 border hb-border rounded hb-accent" data-i18n="btn_add_link">[+ Añadir otro enlace]</button>
+                                </div>
+                                <div id="ws-enlaces-container" class="space-y-2"></div>
+                            </div>
+
+                            <p id="ws-feedback" class="text-xs hb-accent hidden"></p>
+
+                            <div class="flex gap-3 pt-2">
+                                <button type="button" id="ws-cancel-edit" class="hidden flex-1 py-2 border hb-border rounded hb-text-muted hover:underline" data-i18n="btn_cancel">
+                                    [esc] Cancelar
+                                </button>
+                                <button type="submit" id="ws-submit-btn" class="dash-btn flex-1 py-2.5 border hb-border rounded hb-accent font-bold" data-i18n="btn_save">
+                                    [save] Publicar Proyecto
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Mis Proyectos + Proyectos donde soy Colaborador (o todos si soy Superusuario) -->
+                <div class="lg:col-span-7" id="my-projects">
+                    <div class="flex justify-between items-center border-b hb-border pb-3 mb-4">
+                        <h2 class="hb-accent text-base font-bold" data-i18n="ws_my_projects_title">&gt; Mis Proyectos y Colaboraciones</h2>
+                        <span id="my-projects-user-tag" class="text-xs hb-text-muted"></span>
+                    </div>
+
+                    <div id="my-projects-list" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- Tabla 4 y Cambio 2: Mensajes Privados e Invitaciones a Colaborar -->
+            <div id="mensajes-section" class="hb-panel border hb-border rounded-md p-6">
+                <h2 class="hb-accent text-lg font-bold border-b hb-border pb-3 mb-6">&gt; Mensajes Privados e Invitaciones a Proyectos</h2>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Enviar Mensaje Privado o Invitación -->
+                    <div class="lg:col-span-5">
+                        <h3 class="hb-text-main font-bold text-sm mb-3">✉ Enviar Mensaje Directo o Invitar a un Proyecto</h3>
+                        <form id="enviar-mensaje-form" class="space-y-3 text-sm">
+                            <div>
+                                <label class="block text-xs hb-accent mb-1">Nombre de usuario destinatario:</label>
+                                <input id="msg-destinatario" type="text" placeholder="ej. data_ninja, java_dev99, hardware_hacker..." class="w-full border hb-border rounded hb-panel-alpha px-3 py-2 hb-text-main focus:outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs hb-accent mb-1">Asunto:</label>
+                                <input id="msg-asunto" type="text" placeholder="Consulta o invitación a colaborar" class="w-full border hb-border rounded hb-panel-alpha px-3 py-2 hb-text-main focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs hb-accent mb-1">Invitar a ser Colaborador de uno de mis proyectos (Opcional):</label>
+                                <select id="msg-proyecto-invitado" class="w-full border hb-border rounded hb-panel-alpha px-3 py-2 hb-text-main focus:outline-none">
+                                    <option value="" class="bg-[#181a20] text-white">-- Solo enviar mensaje privado normal --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs hb-accent mb-1">Contenido del mensaje:</label>
+                                <textarea id="msg-contenido" rows="3" placeholder="Escribe tu mensaje privado aquí..." class="w-full border hb-border rounded hb-panel-alpha px-3 py-2 hb-text-main focus:outline-none resize-none" required></textarea>
+                            </div>
+                            <p id="msg-feedback" class="text-xs hb-accent hidden"></p>
+                            <button type="submit" class="dash-btn w-full py-2 border hb-border rounded hb-accent font-bold">[✉ Enviar Mensaje / Invitación]</button>
+                        </form>
+                    </div>
+
+                    <!-- Bandeja de Entrada y Salida -->
+                    <div class="lg:col-span-7 space-y-6">
+                        <div>
+                            <h3 class="hb-accent font-bold text-sm mb-3">📥 Bandeja de Entrada (Mensajes e Invitaciones Recibidas)</h3>
+                            <div id="mensajes-recibidos-lista" class="space-y-3 text-sm"></div>
+                        </div>
+
+                        <div class="border-t hb-border pt-4">
+                            <h3 class="hb-text-muted font-bold text-xs mb-2">📤 Mensajes e Invitaciones Enviadas</h3>
+                            <div id="mensajes-enviados-lista" class="space-y-2 text-xs"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="w-full text-center p-6 hb-text-muted text-xs border-t hb-border mt-auto">
+        <span>HB Workspace v3.0 / ImHex@bk.ru</span>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        const currentUser = HBClient.getCurrentUser();
+        const authGuardBox = document.getElementById('auth-guard-box');
+        const wsContainer = document.getElementById('workspace-container');
+        const myProjectsList = document.getElementById('my-projects-list');
+        let misProyectosCache = [];
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        window.agregarCampoEnlaceWS = function(titulo = '', url = '') {
+            const container = document.getElementById('ws-enlaces-container');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 ws-enlace-row';
+            div.innerHTML = `
+                <input type="text" placeholder="Nombre (ej. Repo Backend)" value="${escapeHtml(titulo)}" class="ws-enlace-titulo w-1/3 border hb-border rounded hb-panel-alpha px-2.5 py-1.5 hb-text-main text-xs focus:outline-none" required>
+                <input type="url" placeholder="https://github.com/..." value="${escapeHtml(url)}" class="ws-enlace-url flex-1 border hb-border rounded hb-panel-alpha px-2.5 py-1.5 hb-text-main text-xs focus:outline-none" required>
+                <button type="button" onclick="this.parentElement.remove()" class="px-2.5 py-1 border hb-border rounded text-red-400 text-xs">✕</button>
+            `;
+            container.appendChild(div);
+        };
+
+        async function loadWorkspace() {
+            if (!currentUser) {
+                authGuardBox.classList.remove('hidden');
+                wsContainer.classList.add('hidden');
+                return;
+            }
+            authGuardBox.classList.add('hidden');
+            wsContainer.classList.remove('hidden');
+
+            const isSuper = HBClient.esSuperusuario(currentUser);
+            document.getElementById('my-projects-user-tag').textContent =
+                `usuario: { "${currentUser.username}" } ${isSuper ? '[SUPERUSUARIO]' : ''}`;
+
+            // Si es superusuario puede ver/editar cualquier publicación; si es normal ve los suyos + colaboraciones
+            misProyectosCache = isSuper
+                ? await HBClient.getProyectos('', 'ALL', '')
+                : await HBClient.getProyectos('', 'ALL', currentUser.id);
+
+            // Llenar selector de proyectos propios para invitar colaboradores
+            const selectInvitar = document.getElementById('msg-proyecto-invitado');
+            const proyectosPropios = misProyectosCache.filter(p => HBClient.esDueno(p, currentUser) || isSuper);
+            selectInvitar.innerHTML = `<option value="" class="bg-[#181a20] text-white">-- Solo enviar mensaje privado normal --</option>` +
+                proyectosPropios.map(p => `<option value="${p.id}" class="bg-[#181a20] text-white">Invitar a colaborar en: ${escapeHtml(p.titulo)}</option>`).join('');
+
+            if (misProyectosCache.length === 0) {
+                myProjectsList.innerHTML = `
+                    <div class="border hb-border rounded-md p-6 text-center hb-text-muted text-sm">
+                        Aún no tienes proyectos propios ni colaboraciones. Usa el formulario de la izquierda para publicar tu primer proyecto.
+                    </div>
+                `;
+            } else {
+                myProjectsList.innerHTML = misProyectosCache.map(p => {
+                    const esDueno = HBClient.esDueno(p, currentUser);
+                    const esColab = HBClient.esColaborador(p, currentUser);
+                    const puedeBorrar = HBClient.puedeEliminar(p, currentUser); // Colaborador NO puede eliminar
+
+                    let badge = '';
+                    if (esDueno) badge = `<span class="text-xs px-2 py-0.5 border hb-border rounded hb-accent font-bold">${HBClient.t('badge_yours')}</span>`;
+                    else if (esColab) badge = `<span class="text-xs px-2 py-0.5 border hb-border rounded hb-accent font-bold">${HBClient.t('badge_collab')}</span>`;
+                    else if (isSuper) badge = `<span class="text-xs px-2 py-0.5 border hb-border rounded hb-accent font-bold">${HBClient.t('badge_superuser')}</span>`;
+
+                    const enlacesHtml = (Array.isArray(p.enlaces) ? p.enlaces : [])
+                        .map(e => `<a href="${escapeHtml(e.url)}" target="_blank" class="text-xs hb-accent hover:underline mr-3">🔗 ${escapeHtml(e.titulo)}</a>`)
+                        .join('');
+
+                    return `
+                        <div class="result-card p-5 rounded-md border hb-border hb-panel">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <a href="project-detail.html?id=${p.id}" class="text-lg font-bold hb-accent hover:underline">
+                                        { "${escapeHtml(p.titulo)}" }
+                                    </a>
+                                    ${badge}
+                                    <span class="text-xs hb-text-muted">👁️ ${p.visitas || 0} visitas</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs">
+                                    <button onclick="cargarEnFormulario(${p.id})" class="dash-btn px-2.5 py-1 border hb-border rounded hb-text-main">
+                                        ${HBClient.t('btn_edit_project')}
+                                    </button>
+                                    ${puedeBorrar ? `
+                                        <button onclick="eliminarMiProyecto(${p.id}, '${escapeHtml(p.titulo)}')" class="px-2.5 py-1 border hb-border rounded text-red-400 hover:border-red-500">
+                                            ${HBClient.t('btn_delete_project')}
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+
+                            <div class="text-xs hb-text-muted mb-2 flex flex-wrap gap-2">
+                                <span>Tipo: <strong class="hb-accent">${escapeHtml(p.tipo)}</strong></span>
+                                <span>| Dueño: @${escapeHtml(p.autorUsername || 'anon')}</span>
+                                ${p.tecnologias ? `<span>| Stack: ${escapeHtml(p.tecnologias)}</span>` : ''}
+                            </div>
+
+                            <p class="hb-accent text-xs mb-1"><strong>Resumen (Buscador):</strong> ${escapeHtml(p.descripcionCorta || '')}</p>
+                            <p class="hb-text-main text-sm leading-relaxed mb-2">${escapeHtml(p.descripcion)}</p>
+
+                            <div class="flex flex-wrap gap-2 mt-2">${enlacesHtml}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            await cargarBandejaMensajes();
+        }
+
+        async function cargarBandejaMensajes() {
+            if (!currentUser) return;
+            const recibidos = await HBClient.getMensajesRecibidos(currentUser.id);
+            const enviados = await HBClient.getMensajesEnviados(currentUser.id);
+
+            const recCont = document.getElementById('mensajes-recibidos-lista');
+            if (recibidos.length === 0) {
+                recCont.innerHTML = `<p class="hb-text-muted text-xs italic">No tienes mensajes privados recibidos.</p>`;
+            } else {
+                recCont.innerHTML = recibidos.map(m => {
+                    const botonesInvitacion = (m.esInvitacion && m.estadoInvitacion === 'PENDIENTE')
+                        ? `
+                            <div class="mt-3 flex items-center gap-2">
+                                <button onclick="responderInv(${m.id}, true)" class="dash-btn px-3 py-1 border hb-border rounded hb-accent text-xs font-bold">[✓ Aceptar ser Colaborador]</button>
+                                <button onclick="responderInv(${m.id}, false)" class="px-3 py-1 border hb-border rounded text-red-400 text-xs">[✕ Rechazar]</button>
+                            </div>
+                          `
+                        : (m.esInvitacion ? `<span class="inline-block mt-2 text-xs px-2 py-0.5 border hb-border rounded hb-accent">Estado Invitación: ${escapeHtml(m.estadoInvitacion)}</span>` : '');
+
+                    return `
+                        <div class="border hb-border rounded p-3 hb-panel-alpha">
+                            <div class="flex justify-between items-center text-xs mb-1">
+                                <span class="hb-accent font-bold">De: @${escapeHtml(m.remitenteUsername)}</span>
+                                <span class="hb-text-muted">${m.fechaEnvio ? new Date(m.fechaEnvio).toLocaleString() : ''}</span>
+                            </div>
+                            <p class="font-bold hb-text-main text-xs mb-1">${escapeHtml(m.asunto || 'Mensaje')}</p>
+                            <p class="hb-text-main text-sm">${escapeHtml(m.contenido)}</p>
+                            ${botonesInvitacion}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const envCont = document.getElementById('mensajes-enviados-lista');
+            if (enviados.length === 0) {
+                envCont.innerHTML = `<p class="hb-text-muted italic">No has enviado mensajes aún.</p>`;
+            } else {
+                envCont.innerHTML = enviados.map(m => `
+                    <div class="border hb-border rounded p-2.5 hb-panel-alpha flex justify-between items-center">
+                        <div>
+                            <span class="hb-accent font-bold">Para: @${escapeHtml(m.destinatarioUsername)}</span> —
+                            <span class="hb-text-main">${escapeHtml(m.asunto)}</span>
+                        </div>
+                        <span class="hb-text-muted">${m.esInvitacion ? `[Invitación: ${escapeHtml(m.estadoInvitacion)}]` : '[Mensaje]'}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        window.responderInv = async function(mensajeId, aceptar) {
+            try {
+                await HBClient.responderInvitacion(mensajeId, aceptar);
+                await loadWorkspace();
+            } catch (err) {
+                alert(err.message);
+            }
+        };
+
+        document.getElementById('enviar-mensaje-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+            const dest = document.getElementById('msg-destinatario').value.trim();
+            const asunto = document.getElementById('msg-asunto').value.trim();
+            const proyId = document.getElementById('msg-proyecto-invitado').value;
+            const contenido = document.getElementById('msg-contenido').value.trim();
+            const fb = document.getElementById('msg-feedback');
+
+            try {
+                await HBClient.enviarMensajePrivado({
+                    remitenteId: currentUser.id,
+                    destinatarioUsername: dest,
+                    asunto,
+                    contenido,
+                    proyectoInvitadoId: proyId ? Number(proyId) : null
+                });
+                fb.textContent = `> Mensaje enviado correctamente a @${dest}`;
+                fb.className = 'text-xs hb-accent';
+                fb.classList.remove('hidden');
+                document.getElementById('msg-destinatario').value = '';
+                document.getElementById('msg-asunto').value = '';
+                document.getElementById('msg-proyecto-invitado').value = '';
+                document.getElementById('msg-contenido').value = '';
+                await cargarBandejaMensajes();
+            } catch (err) {
+                fb.textContent = `> Error: ${err.message}`;
+                fb.className = 'text-xs text-red-400';
+                fb.classList.remove('hidden');
+            }
+        });
+
+        window.cargarEnFormulario = function(id) {
+            const p = misProyectosCache.find(item => Number(item.id) === Number(id));
+            if (!p) return;
+            document.getElementById('ws-proyecto-id').value = p.id;
+            document.getElementById('ws-titulo').value = p.titulo;
+            document.getElementById('ws-tipo').value = p.tipo;
+            document.getElementById('ws-tecnologias').value = p.tecnologias || '';
+            document.getElementById('ws-descripcion-corta').value = p.descripcionCorta || '';
+            document.getElementById('ws-descripcion').value = p.descripcion;
+
+            const cont = document.getElementById('ws-enlaces-container');
+            cont.innerHTML = '';
+            const enlaces = Array.isArray(p.enlaces) && p.enlaces.length > 0
+                ? p.enlaces
+                : (p.repositorioUrl ? [{ titulo: 'Repositorio Principal', url: p.repositorioUrl }] : []);
+            if (enlaces.length > 0) {
+                enlaces.forEach(e => window.agregarCampoEnlaceWS(e.titulo, e.url));
+            } else {
+                window.agregarCampoEnlaceWS('Repositorio Principal', '');
+            }
+
+            document.getElementById('form-heading').textContent = `> Editando Proyecto :: { "${p.titulo}" }`;
+            document.getElementById('ws-submit-btn').textContent = HBClient.t('btn_update');
+            document.getElementById('ws-cancel-edit').classList.remove('hidden');
+            document.getElementById('reset-form-btn').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        function resetForm() {
+            document.getElementById('ws-proyecto-id').value = '';
+            document.getElementById('ws-titulo').value = '';
+            document.getElementById('ws-tipo').value = 'Programming';
+            document.getElementById('ws-tecnologias').value = '';
+            document.getElementById('ws-descripcion-corta').value = '';
+            document.getElementById('ws-descripcion').value = '';
+            const cont = document.getElementById('ws-enlaces-container');
+            cont.innerHTML = '';
+            window.agregarCampoEnlaceWS('Repositorio Principal', '');
+
+            document.getElementById('form-heading').textContent = HBClient.t('ws_new_title');
+            document.getElementById('ws-submit-btn').textContent = HBClient.t('btn_save');
+            document.getElementById('ws-cancel-edit').classList.add('hidden');
+            document.getElementById('reset-form-btn').classList.add('hidden');
+        }
+
+        document.getElementById('ws-cancel-edit').addEventListener('click', resetForm);
+        document.getElementById('reset-form-btn').addEventListener('click', resetForm);
+
+        window.eliminarMiProyecto = async function(id, titulo) {
+            if (!confirm(`¿Eliminar el proyecto { "${titulo}" } de la base de datos?`)) return;
+            try {
+                await HBClient.eliminarProyecto(id);
+                resetForm();
+                await loadWorkspace();
+            } catch (err) {
+                alert(err.message);
+            }
+        };
+
+        document.getElementById('workspace-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const id = document.getElementById('ws-proyecto-id').value;
+            const enlacesRecolectados = [];
+            document.querySelectorAll('#ws-enlaces-container .ws-enlace-row').forEach(row => {
+                const t = row.querySelector('.ws-enlace-titulo').value.trim();
+                const u = row.querySelector('.ws-enlace-url').value.trim();
+                if (u) enlacesRecolectados.push({ titulo: t || 'Repositorio', url: u });
+            });
+
+            const dto = {
+                titulo: document.getElementById('ws-titulo').value.trim(),
+                tipo: document.getElementById('ws-tipo').value,
+                usuarioId: Number(currentUser.id),
+                tecnologias: document.getElementById('ws-tecnologias').value.trim(),
+                descripcionCorta: document.getElementById('ws-descripcion-corta').value.trim(),
+                descripcion: document.getElementById('ws-descripcion').value.trim(),
+                enlaces: enlacesRecolectados,
+                repositorioUrl: enlacesRecolectados.length > 0 ? enlacesRecolectados[0].url : ''
+            };
+
+            if (id) {
+                await HBClient.actualizarProyecto(id, dto);
+            } else {
+                await HBClient.crearProyecto(dto);
+            }
+
+            const fb = document.getElementById('ws-feedback');
+            fb.textContent = '> ¡Proyecto y enlaces guardados en PostgreSQL!';
+            fb.classList.remove('hidden');
+            setTimeout(() => fb.classList.add('hidden'), 2500);
+
+            resetForm();
+            await loadWorkspace();
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            resetForm();
+            await loadWorkspace();
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('editId')) {
+                window.cargarEnFormulario(Number(params.get('editId')));
+            }
+        });
+    </script>
+</body>
+</html>

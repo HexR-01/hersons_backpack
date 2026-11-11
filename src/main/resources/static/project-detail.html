@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herson's Backpack - Detalle del Proyecto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Share Tech Mono', monospace; margin: 0; min-height: 100vh; overflow-x: hidden; }
+        .bg-gradient-blob { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -1; opacity: 0.2; animation: float 20s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95); }
+        .blob-1 { width: 50vw; height: 50vw; top: -20%; left: -10%; }
+        .blob-2 { width: 40vw; height: 40vw; bottom: -10%; right: -10%; animation-delay: -5s; }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(5%, 10%) scale(1.1); } 66% { transform: translate(-5%, -5%) scale(0.9); } 100% { transform: translate(10%, -10%) scale(1.05); } }
+        .dash-btn { position: relative; overflow: hidden; transition: all 0.2s ease; z-index: 1; }
+        .dash-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; transition: all 0.3s ease; z-index: -1; }
+        .dash-btn:hover::before { left: 0; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <div class="bg-gradient-blob blob-1"></div>
+    <div class="bg-gradient-blob blob-2"></div>
+
+    <header class="flex items-center justify-between p-4 sm:p-6 w-full border-b hb-border hb-panel-alpha backdrop-blur-md sticky top-0 z-40">
+        <div class="flex items-center gap-4">
+            <a href="projects.html" class="dash-btn border hb-border rounded px-3 py-1.5 text-xs sm:text-sm hb-accent">
+                [←] Volver al Buscador
+            </a>
+            <span class="text-sm sm:text-base font-bold hb-text-main" id="header-view-mode">&gt; project_inspector.ro</span>
+        </div>
+
+        <a href="index.html" class="select-none">
+            <img src="hb.png" alt="HB Logo" class="h-10 object-contain filter drop-shadow-[0_0_8px_rgba(74,222,128,0.4)]">
+        </a>
+    </header>
+
+    <main class="flex-grow w-full max-w-4xl mx-auto px-6 py-10 space-y-8">
+
+        <!-- Tarjeta Principal del Proyecto -->
+        <div id="readonly-view" class="hb-panel border hb-border rounded-md p-6 sm:p-8 shadow-lg">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b hb-border pb-4 mb-6">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <span id="ownership-badge" class="text-xs px-2 py-0.5 border hb-border rounded hb-accent">[SOLO LECTURA]</span>
+                        <span id="visitas-badge" class="text-xs px-2.5 py-0.5 border hb-border rounded hb-text-main font-bold">👁️ 0 visitas</span>
+                    </div>
+                    <h1 id="det-titulo" class="text-2xl sm:text-3xl font-bold hb-accent">{ "Project_Title" }</h1>
+                </div>
+
+                <!-- Botones de Acción (Editar para Dueño/Colaborador/Superusuario; Eliminar SOLO para Dueño/Superusuario) -->
+                <div id="owner-actions" class="hidden flex flex-wrap items-center gap-2 text-xs">
+                    <button id="btn-toggle-edit" class="dash-btn px-3 py-2 border hb-border rounded hb-text-main font-bold" data-i18n="btn_edit_project">
+                        [edit] Modificar Proyecto
+                    </button>
+                    <button id="btn-owner-delete" class="hidden px-3 py-2 border hb-border rounded text-red-400 hover:border-red-500 font-bold" data-i18n="btn_delete_project">
+                        [del] Eliminar
+                    </button>
+                </div>
+            </div>
+
+            <p id="ownership-notice" class="text-xs hb-text-muted mb-6 italic"></p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-sm">
+                <div class="border hb-border rounded p-3 hb-panel-alpha">
+                    <span class="block text-xs hb-text-muted mb-1" data-i18n="detail_author">Dueño del proyecto:</span>
+                    <span id="det-autor" class="hb-text-main font-bold"></span>
+                </div>
+                <div class="border hb-border rounded p-3 hb-panel-alpha">
+                    <span class="block text-xs hb-text-muted mb-1" data-i18n="detail_collabs">Colaboradores:</span>
+                    <span id="det-colaboradores" class="hb-accent font-bold">Ninguno</span>
+                </div>
+                <div class="border hb-border rounded p-3 hb-panel-alpha">
+                    <span class="block text-xs hb-text-muted mb-1" data-i18n="detail_type">Categoría / Tipo:</span>
+                    <span id="det-tipo" class="hb-accent font-bold"></span>
+                </div>
+            </div>
+
+            <div class="border hb-border rounded p-4 hb-panel-alpha mb-6 text-sm">
+                <span class="block text-xs hb-text-muted mb-1" data-i18n="detail_stack">Tecnologías utilizadas:</span>
+                <span id="det-stack" class="hb-text-main"></span>
+            </div>
+
+            <!-- Cambio 5: Descripción Pequeña (Resumen de búsqueda) + Descripción Larga (Detalle completo) -->
+            <div class="border hb-border rounded p-4 hb-panel-alpha mb-6">
+                <span class="block text-xs hb-text-muted mb-1" data-i18n="detail_short_desc">Descripción Pequeña (Resumen):</span>
+                <p id="det-descripcion-corta" class="hb-accent text-sm leading-relaxed"></p>
+            </div>
+
+            <div class="border hb-border rounded p-5 hb-panel-alpha mb-6">
+                <span class="block text-xs hb-text-muted mb-2" data-i18n="detail_desc">Descripción Larga (Detalle completo del proyecto):</span>
+                <p id="det-descripcion" class="hb-text-main text-sm sm:text-base leading-relaxed whitespace-pre-line"></p>
+            </div>
+
+            <!-- Tabla 2 y Cambio 3: Múltiples enlaces por publicación -->
+            <div id="det-enlaces-box" class="border hb-border rounded p-4 hb-panel-alpha text-sm">
+                <span class="block text-xs hb-text-muted mb-2" data-i18n="detail_repo">Enlaces y Repositorios del Proyecto:</span>
+                <ul id="det-enlaces-lista" class="space-y-2"></ul>
+            </div>
+
+            <!-- Invitar Colaborador por Mensaje Privado (Solo visible para el Dueño o Superusuario) -->
+            <div id="invite-colab-box" class="hidden border hb-border rounded p-4 hb-panel-alpha mt-6 text-sm">
+                <h3 class="hb-accent font-bold mb-2">&gt; Invitar Usuario como Colaborador (vía Mensaje Privado)</h3>
+                <form id="invite-colab-form" class="flex flex-col sm:flex-row gap-2">
+                    <input id="invite-username" type="text" placeholder="username del usuario a invitar (ej. data_ninja)" class="flex-1 border hb-border rounded hb-panel px-3 py-2 hb-text-main focus:outline-none" required>
+                    <input id="invite-msg" type="text" placeholder="Mensaje de invitación..." class="flex-1 border hb-border rounded hb-panel px-3 py-2 hb-text-main focus:outline-none">
+                    <button type="submit" class="dash-btn px-4 py-2 border hb-border rounded hb-accent font-bold">[✉ Invitar]</button>
+                </form>
+                <p id="invite-feedback" class="text-xs hb-accent mt-2 hidden"></p>
+            </div>
+        </div>
+
+        <!-- Panel de Edición (Accesible para Dueño, Colaborador o Superusuario) -->
+        <div id="owner-edit-panel" class="hidden hb-panel border hb-border rounded-md p-6 sm:p-8 shadow-lg">
+            <h2 class="hb-accent text-lg font-bold border-b hb-border pb-3 mb-4">&gt; Modificar Proyecto, Descripciones y Enlaces</h2>
+            <form id="owner-edit-form" class="space-y-4 text-sm">
+                <div>
+                    <label class="block hb-accent mb-1" data-i18n="form_title">Título del Proyecto:</label>
+                    <input id="edit-titulo" type="text" class="w-full border hb-border rounded hb-panel-alpha px-3 py-2 hb-text-main focus:outline-none" required>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block hb-accent mb-1" data-i18n="form_type">Tipo de Proyecto:</label>
+                        <select id="edit-tipo" class="w-full border hb-border rounded hb-panel-alpha px-3 py-2 hb-text-main focus:outline-none">
+                            <option value="Programming" class="bg-[#181a20] text-white">Programming</option>
+                            <option value="Database" class="bg-[#181a20] text-white">Database</option>
+                            <option value="Hardware & IoT" class="bg-[#181a20] text-white">Hardware &amp; IoT</option>
+                            <option value="Networks & Sec" class="bg-[#181a20] text-white">Networks &amp; Sec</option>
+                            <option value="AI & Data Science" class="bg-[#181a20] text-white">AI &amp; Data Science</option>
+                            <option value="Web & Mobile" class="bg-[#181a20] text-white">Web &amp; Mobile</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block hb-accent mb-1" data-i18n="form_stack">Tecnologías / Stack:</label>
+                        <input id="edit-stack" type="text" class="w-full border hb-border rounded hb-panel-alpha px-3 py-2 hb-text-main focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block hb-accent mb-1" data-i18n="form_short_desc">Descripción Pequeña (Para el buscador):</label>
+                    <input id="edit-descripcion-corta" type="text" maxlength="280" class="w-full border hb-border rounded hb-panel-alpha px-3 py-2 hb-text-main focus:outline-none" required>
+                </div>
+
+                <div>
+                    <label class="block hb-accent mb-1" data-i18n="form_desc">Descripción Larga (Detalle completo al abrir el proyecto):</label>
+                    <textarea id="edit-descripcion" rows="6" class="w-full border hb-border rounded hb-panel-alpha px-3 py-2 hb-text-main focus:outline-none resize-none" required></textarea>
+                </div>
+
+                <!-- Múltiples Enlaces Dinámicos -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block hb-accent" data-i18n="form_links">Enlaces / Repositorios del Proyecto:</label>
+                        <button type="button" onclick="agregarFilaEnlace()" class="dash-btn text-xs px-2.5 py-1 border hb-border rounded hb-accent" data-i18n="btn_add_link">[+ Añadir otro enlace]</button>
+                    </div>
+                    <div id="edit-enlaces-container" class="space-y-2"></div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" id="btn-cancel-owner-edit" class="px-4 py-2 border hb-border rounded hb-text-muted" data-i18n="btn_cancel">[esc] Cancelar</button>
+                    <button type="submit" class="dash-btn px-5 py-2 border hb-border rounded hb-accent font-bold" data-i18n="btn_update">[update] Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabla 3: Sección de Comentarios de Distintas Personas -->
+        <div class="hb-panel border hb-border rounded-md p-6 sm:p-8 shadow-lg">
+            <h2 class="hb-accent text-lg font-bold border-b hb-border pb-3 mb-4">&gt; Comentarios de la Publicación (<span id="comentarios-count">0</span>)</h2>
+
+            <form id="comentario-form" class="mb-6 space-y-3 text-sm">
+                <textarea id="comentario-texto" rows="3" placeholder="Escribe un comentario o retroalimentación sobre este proyecto..." class="w-full border hb-border rounded hb-panel-alpha px-3 py-2 hb-text-main focus:outline-none resize-none" required></textarea>
+                <div class="flex justify-between items-center">
+                    <span id="comentario-auth-hint" class="text-xs hb-text-muted"></span>
+                    <button type="submit" id="btn-enviar-comentario" class="dash-btn px-4 py-2 border hb-border rounded hb-accent font-bold text-xs">[💬 Publicar Comentario]</button>
+                </div>
+            </form>
+
+            <div id="comentarios-lista" class="space-y-3 text-sm"></div>
+        </div>
+
+    </main>
+
+    <footer class="w-full text-center p-6 hb-text-muted text-xs border-t hb-border mt-auto">
+        <span>HB Project Inspector v3.0 / ImHex@bk.ru</span>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        let currentProject = null;
+        const currentUser = HBClient.getCurrentUser();
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        window.agregarFilaEnlace = function(titulo = '', url = '') {
+            const container = document.getElementById('edit-enlaces-container');
+            const row = document.createElement('div');
+            row.className = 'flex flex-col sm:flex-row gap-2 enlace-row';
+            row.innerHTML = `
+                <input type="text" placeholder="Título (ej. Repo Backend, Docs)" value="${escapeHtml(titulo)}" class="enlace-titulo sm:w-1/3 border hb-border rounded hb-panel-alpha px-3 py-1.5 hb-text-main focus:outline-none" required>
+                <input type="url" placeholder="https://github.com/..." value="${escapeHtml(url)}" class="enlace-url flex-1 border hb-border rounded hb-panel-alpha px-3 py-1.5 hb-text-main focus:outline-none" required>
+                <button type="button" onclick="this.parentElement.remove()" class="px-3 py-1.5 border hb-border rounded text-red-400 hover:border-red-500">✕</button>
+            `;
+            container.appendChild(row);
+        };
+
+        async function initDetailView(incrementarVisita = true) {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            if (!id) {
+                window.location.replace('projects.html');
+                return;
+            }
+
+            currentProject = await HBClient.getProyectoPorId(id, incrementarVisita);
+            if (!currentProject) {
+                document.getElementById('det-titulo').textContent = '> Proyecto no encontrado';
+                return;
+            }
+
+            const isOwner = HBClient.esDueno(currentProject, currentUser);
+            const isCollab = HBClient.esColaborador(currentProject, currentUser);
+            const isSuper = HBClient.esSuperusuario(currentUser);
+            const canEdit = isOwner || isCollab || isSuper;
+            const canDelete = isOwner || isSuper; // Colaborador solo modifica, NO elimina
+
+            document.getElementById('det-titulo').textContent = `{ "${currentProject.titulo}" }`;
+            document.getElementById('visitas-badge').textContent = `👁️ ${currentProject.visitas || 0} visitas`;
+            document.getElementById('det-autor').textContent = `{ "${currentProject.autorUsername || 'anon'}" }`;
+            document.getElementById('det-colaboradores').textContent =
+                (Array.isArray(currentProject.colaboradoresUsernames) && currentProject.colaboradoresUsernames.length > 0)
+                    ? currentProject.colaboradoresUsernames.join(', ')
+                    : 'Ninguno';
+            document.getElementById('det-tipo').textContent = currentProject.tipo;
+            document.getElementById('det-stack').textContent = currentProject.tecnologias || 'N/A';
+            document.getElementById('det-descripcion-corta').textContent = currentProject.descripcionCorta || currentProject.descripcion;
+            document.getElementById('det-descripcion').textContent = currentProject.descripcion;
+
+            // Renderizar todos los enlaces de la tabla enlaces_proyecto
+            const listaEnlaces = document.getElementById('det-enlaces-lista');
+            const enlaces = Array.isArray(currentProject.enlaces) && currentProject.enlaces.length > 0
+                ? currentProject.enlaces
+                : (currentProject.repositorioUrl ? [{ titulo: 'Repositorio Principal', url: currentProject.repositorioUrl }] : []);
+
+            if (enlaces.length > 0) {
+                document.getElementById('det-enlaces-box').classList.remove('hidden');
+                listaEnlaces.innerHTML = enlaces.map(e => `
+                    <li class="flex flex-col sm:flex-row sm:items-center justify-between border-b hb-border pb-2 last:border-b-0">
+                        <span class="font-bold hb-text-main">🔗 ${escapeHtml(e.titulo || 'Enlace')}:</span>
+                        <a href="${escapeHtml(e.url)}" target="_blank" rel="noopener noreferrer" class="hb-accent hover:underline break-all">${escapeHtml(e.url)}</a>
+                    </li>
+                `).join('');
+            } else {
+                document.getElementById('det-enlaces-box').classList.add('hidden');
+            }
+
+            // Renderizar permisos según Dueño / Colaborador / Superusuario / Visitante
+            if (canEdit) {
+                document.getElementById('header-view-mode').textContent = '> project_editor_view.rw';
+                if (isOwner) document.getElementById('ownership-badge').textContent = HBClient.t('badge_yours');
+                else if (isCollab) document.getElementById('ownership-badge').textContent = HBClient.t('badge_collab');
+                else if (isSuper) document.getElementById('ownership-badge').textContent = HBClient.t('badge_superuser');
+
+                document.getElementById('ownership-notice').textContent = isCollab
+                    ? 'Eres colaborador de este proyecto: puedes modificar sus descripciones y enlaces, pero no eliminarlo.'
+                    : HBClient.t('detail_owner_notice');
+
+                document.getElementById('owner-actions').classList.remove('hidden');
+                if (canDelete) {
+                    document.getElementById('btn-owner-delete').classList.remove('hidden');
+                    document.getElementById('invite-colab-box').classList.remove('hidden');
+                } else {
+                    document.getElementById('btn-owner-delete').classList.add('hidden');
+                    document.getElementById('invite-colab-box').classList.add('hidden');
+                }
+
+                // Prellenar formulario de edición
+                document.getElementById('edit-titulo').value = currentProject.titulo;
+                document.getElementById('edit-tipo').value = currentProject.tipo;
+                document.getElementById('edit-stack').value = currentProject.tecnologias || '';
+                document.getElementById('edit-descripcion-corta').value = currentProject.descripcionCorta || '';
+                document.getElementById('edit-descripcion').value = currentProject.descripcion;
+
+                const editEnlacesCont = document.getElementById('edit-enlaces-container');
+                editEnlacesCont.innerHTML = '';
+                if (enlaces.length > 0) {
+                    enlaces.forEach(e => window.agregarFilaEnlace(e.titulo, e.url));
+                } else {
+                    window.agregarFilaEnlace('Repositorio Principal', '');
+                }
+            } else {
+                document.getElementById('header-view-mode').textContent = HBClient.t('detail_modal_title');
+                document.getElementById('ownership-badge').textContent = HBClient.t('badge_readonly');
+                document.getElementById('ownership-notice').textContent = HBClient.t('detail_visitor_notice');
+                document.getElementById('owner-actions').classList.add('hidden');
+                document.getElementById('owner-edit-panel').classList.add('hidden');
+                document.getElementById('invite-colab-box').classList.add('hidden');
+            }
+
+            // Renderizar comentarios
+            renderComentarios(currentProject.comentarios || []);
+        }
+
+        function renderComentarios(comentarios) {
+            document.getElementById('comentarios-count').textContent = comentarios.length;
+            const hint = document.getElementById('comentario-auth-hint');
+            const btn = document.getElementById('btn-enviar-comentario');
+            if (!currentUser) {
+                hint.innerHTML = 'Debes <a href="login.html" class="hb-accent underline">iniciar sesión</a> para publicar un comentario.';
+                btn.disabled = true;
+            } else {
+                hint.textContent = `Comentando como { "${currentUser.username}" }`;
+                btn.disabled = false;
+            }
+
+            const cont = document.getElementById('comentarios-lista');
+            if (comentarios.length === 0) {
+                cont.innerHTML = `<p class="hb-text-muted text-xs italic">Aún no hay comentarios. ¡Sé el primero en comentar!</p>`;
+                return;
+            }
+            cont.innerHTML = comentarios.map(c => `
+                <div class="border hb-border rounded p-3 hb-panel-alpha">
+                    <div class="flex justify-between items-center text-xs mb-1">
+                        <span class="hb-accent font-bold">@${escapeHtml(c.autorUsername || 'usuario')}</span>
+                        <span class="hb-text-muted">${c.fechaCreacion ? new Date(c.fechaCreacion).toLocaleString() : ''}</span>
+                    </div>
+                    <p class="hb-text-main">${escapeHtml(c.contenido)}</p>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('comentario-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser || !currentProject) return;
+            const texto = document.getElementById('comentario-texto').value.trim();
+            if (!texto) return;
+            await HBClient.agregarComentario(currentProject.id, texto);
+            document.getElementById('comentario-texto').value = '';
+            await initDetailView(false);
+        });
+
+        document.getElementById('invite-colab-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser || !currentProject) return;
+            const destUser = document.getElementById('invite-username').value.trim();
+            const customMsg = document.getElementById('invite-msg').value.trim() ||
+                `¡Hola @${destUser}! Te invito a ser colaborador del proyecto "${currentProject.titulo}".`;
+            const fb = document.getElementById('invite-feedback');
+            try {
+                await HBClient.enviarMensajePrivado({
+                    remitenteId: currentUser.id,
+                    destinatarioUsername: destUser,
+                    asunto: `Invitación a colaborar en ${currentProject.titulo}`,
+                    contenido: customMsg,
+                    proyectoInvitadoId: currentProject.id
+                });
+                fb.textContent = `> ¡Invitación enviada por mensaje privado a @${destUser}!`;
+                fb.className = 'text-xs hb-accent mt-2';
+                fb.classList.remove('hidden');
+                document.getElementById('invite-username').value = '';
+                document.getElementById('invite-msg').value = '';
+            } catch (err) {
+                fb.textContent = `> Error: ${err.message}`;
+                fb.className = 'text-xs text-red-400 mt-2';
+                fb.classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('btn-toggle-edit').addEventListener('click', () => {
+            const panel = document.getElementById('owner-edit-panel');
+            panel.classList.toggle('hidden');
+            if (!panel.classList.contains('hidden')) panel.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        document.getElementById('btn-cancel-owner-edit').addEventListener('click', () => {
+            document.getElementById('owner-edit-panel').classList.add('hidden');
+        });
+
+        document.getElementById('owner-edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentProject || !HBClient.puedeModificar(currentProject, currentUser)) return;
+
+            const enlacesRecolectados = [];
+            document.querySelectorAll('#edit-enlaces-container .enlace-row').forEach(row => {
+                const t = row.querySelector('.enlace-titulo').value.trim();
+                const u = row.querySelector('.enlace-url').value.trim();
+                if (u) enlacesRecolectados.push({ titulo: t || 'Repositorio', url: u });
+            });
+
+            const dto = {
+                titulo: document.getElementById('edit-titulo').value.trim(),
+                tipo: document.getElementById('edit-tipo').value,
+                usuarioId: Number(currentProject.usuarioId),
+                tecnologias: document.getElementById('edit-stack').value.trim(),
+                descripcionCorta: document.getElementById('edit-descripcion-corta').value.trim(),
+                descripcion: document.getElementById('edit-descripcion').value.trim(),
+                enlaces: enlacesRecolectados,
+                repositorioUrl: enlacesRecolectados.length > 0 ? enlacesRecolectados[0].url : ''
+            };
+
+            await HBClient.actualizarProyecto(currentProject.id, dto);
+            document.getElementById('owner-edit-panel').classList.add('hidden');
+            await initDetailView(false);
+        });
+
+        document.getElementById('btn-owner-delete').addEventListener('click', async () => {
+            if (!currentProject || !HBClient.puedeEliminar(currentProject, currentUser)) return;
+            if (!confirm(`¿Eliminar el proyecto { "${currentProject.titulo}" }?`)) return;
+            await HBClient.eliminarProyecto(currentProject.id);
+            window.location.href = 'projects.html';
+        });
+
+        window.addEventListener('DOMContentLoaded', () => initDetailView(true));
+    </script>
+</body>
+</html>
